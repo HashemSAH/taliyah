@@ -1,2 +1,3 @@
-lol analytics 
-connection works!
+## lolalytics 
+- pick ban 
+- solo queue 
