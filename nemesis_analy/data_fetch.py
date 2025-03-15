@@ -66,9 +66,6 @@ for idx in tqdm(range(len(match_ids))):
             opp_p_num = k
             break
 
-    if opp_p_num is None:
-        continue  # skip this match if no opponent found
-
     # Total team damage
     dmg_tot = sum(p['totalDamageDealtToChampions'] for p in info_participants if p['teamId'] == my_team_id)
 
@@ -84,6 +81,10 @@ for idx in tqdm(range(len(match_ids))):
     monsters = my_info['neutralMinionsKilled']
     pos = my_info['teamPosition']
     opp_champ = info_participants[opp_p_num]['championName']
+    # first_drag = 
+    # Num_drags = 
+    # void = 
+
 
     # GET TIMELINE INFO
     timeline_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/{match_ids[idx]}/timeline'

@@ -25,46 +25,36 @@ df['gold_diff15'] = df['gold15me'] - df['gold15opp']
 df['xp_diff7'] = df['xp7me'] - df['xp7opp']
 df['xp_diff15'] = df['xp15me'] - df['xp15opp']
 
-# df['lead7'] = df['gold_diff7'] > 0 
+df['lead7'] = df['gold_diff7'] > 0 
 df['lead15'] = df['gold_diff15'] > 0 
 
-# print(df['Win'].mean())
+#Test of two means seperated by a categorical variable
+def t_test_func(col):
+    group_1 = df[df[col] == True]['Win']
+    group_2 = df[df[col] == False]['Win']
+    
+    print(f"True mean: {group_1.mean():.4f}, False mean : {group_2.mean():.4f}")
 
-# group_1 = df[df['lead7'] == True]['Win']
-# group_2 = df[df['lead7'] == False]['Win']
-
-# print(group_1.mean())
-
-# t_stat, p_val = ttest_ind(group_1, group_2, equal_var=False)
-# print(f"T-statistic: {t_stat:.4f}, p-value: {p_val:.4f}")
-
-group_1 = df[df['lead15'] == True]['Win']
-group_2 = df[df['lead15'] == False]['Win']
-
-print(group_1.mean())
-
-t_stat, p_val = ttest_ind(group_1, group_2, equal_var=False)
-print(f"T-statistic: {t_stat:.4f}, p-value: {p_val:.4f}")
-
-# print((df['lead7'] == df['lead15']).all())  # True means they're the same
-
-# print(df[['lead7','lead15']])
-
-y = df['Win']  
-X = df[['dmg/taken', 'dmg/min', 'dmg/gold_min', 'cs/min','gold_diff7','gold_diff15' ,'xp_diff7','xp_diff15']]
-
-average = X.mean()
-median = X.median()
-standard_dev = X.std()
-ranges = X.max() - X.min()
+    t_stat, p_val = ttest_ind(group_1, group_2, equal_var=False)
+    print(f"T-statistic: {t_stat:.4f}, p-value: {p_val:.4f}")
 
 
-statistics_table = pd.DataFrame({
-    'Average': average,
-    'Median': median,
-    'Standard deviation': standard_dev,
-    'Range': ranges
-})
+
+# y = df['Win']  
+# X = df[['dmg/taken', 'dmg/min', 'dmg/gold_min', 'cs/min','gold_diff7','gold_diff15' ,'xp_diff7','xp_diff15']]
+
+# average = X.mean()
+# median = X.median()
+# standard_dev = X.std()
+# ranges = X.max() - X.min()
+
+
+# statistics_table = pd.DataFrame({
+#     'Average': average,
+#     'Median': median,
+#     'Standard deviation': standard_dev,
+#     'Range': ranges
+# })
 
 # # Display the table
 # print(statistics_table)
@@ -82,12 +72,12 @@ statistics_table = pd.DataFrame({
 # # Show the plots
 # plt.show()
 
-# X = df['gold_diff15'] 
-# X = sm.add_constant(X)              
-# y = df['Win']                         
+X = df['Deaths'] 
+X = sm.add_constant(X)              
+y = df['Win']                         
 
-# model = sm.Logit(y, X).fit()
-# print(model.summary())
+model = sm.Logit(y, X).fit()
+print(model.summary())
 
 
 # group1 = df[df['Win'] == True]['gold_diff7']

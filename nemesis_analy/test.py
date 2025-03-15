@@ -35,17 +35,35 @@ for i in range(len(match_ids[:1])):
     match_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/{match_ids[i]}'
     response = requests.get(match_url, headers={"X-Riot-Token": API_KEY})
     match_data = response.json()
-    team_1_dragons = match_data['info']['teams'][0]['objectives']['dragon']['kills']
-    team_2_dragons = match_data['info']['teams'][1]['objectives']['dragon']['kills']
 
-    print(f"Team 1 Dragons: {team_1_dragons}")
-    print(f"Team 2 Dragons: {team_2_dragons}")
+    metadata_participants = match_data['metadata']['participants']
+    info_participants = match_data['info']['participants']
 
-    team_1_dragons = match_data['info']['teams'][0]['objectives']['dragon']['first']
-    team_2_dragons = match_data['info']['teams'][1]['objectives']['dragon']['first']
+    # Get your participant index
+    for j, pid in enumerate(metadata_participants):
+        if pid == puuid:
+            p_num = j
+            break
 
-    print(f"Team 1 Dragons: {team_1_dragons}")
-    print(f"Team 2 Dragons: {team_2_dragons}")
+    my_info = info_participants[p_num]
+    my_team_id = my_info['teamId']
+    my_lane = my_info['teamPosition']
+
+    print(my_team_id)
+    team_id = int(my_team_id/100 -1)
+    print(match_data['info']['teams'][team_id]['objectives']['dragon']['kills'])
+    print(match_data['info']['teams'][team_id]['objectives']['dragon']['first'])
+    # team_1_dragons = match_data['info']['teams'][0]['objectives']['dragon']['kills']
+    # team_2_dragons = match_data['info']['teams'][1]['objectives']['dragon']['kills']
+
+    # print(f"Team 1 Dragons: {team_1_dragons}")
+    # print(f"Team 2 Dragons: {team_2_dragons}")
+
+    # team_1_dragons = match_data['info']['teams'][0]['objectives']['dragon']['first']
+    # team_2_dragons = match_data['info']['teams'][1]['objectives']['dragon']['first']
+
+    # print(f"Team 1 Dragons: {team_1_dragons}")
+    # print(f"Team 2 Dragons: {team_2_dragons}")
 
     
 
