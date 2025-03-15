@@ -30,7 +30,6 @@ params = {
 
 response = requests.get(matches_url, params=params)
 
-#response = requests.get(matches_url, headers={"X-Riot-Token": API_KEY})
 match_ids = response.json()
 
 
@@ -41,74 +40,77 @@ df = pd.DataFrame(columns=[
 ])
 
 
-for i in tqdm(range(len(match_ids))):
-    # if i % 15==0 and i != 0:
-    #     time.sleep(20)
-
-    match_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/{match_ids[i]}'
+for idx in tqdm(range(len(match_ids))):
+    # GET MATCH INFO
+    match_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/{match_ids[idx]}'
     response = requests.get(match_url, headers={"X-Riot-Token": API_KEY})
     match_data = response.json()
 
-    lis_p = match_data['metadata']['participants']
+    metadata_participants = match_data['metadata']['participants']
+    info_participants = match_data['info']['participants']
 
-    p_num = 0 
+    # Get your participant index
+    for j, pid in enumerate(metadata_participants):
+        if pid == puuid:
+            p_num = j
+            break
 
-    for i in range(len(lis_p)):
-        if lis_p[i] == puuid:
-            break 
-        p_num += 1
-    
-    opp_p_num = 0 
-    for i in range(len(match_data['info']['participants'])):
-        pos = (match_data['info']['participants'][i]['teamPosition'])
-        if pos ==  match_data['info']['participants'][p_num]['teamPosition'] and i != p_num:
-            opp_p_num = i
+    my_info = info_participants[p_num]
+    my_team_id = my_info['teamId']
+    my_lane = my_info['teamPosition']
 
+    # Get opponent in same lane but opposite team
+    opp_p_num = None
+    for k, p in enumerate(info_participants):
+        if p['teamPosition'] == my_lane and p['teamId'] != my_team_id:
+            opp_p_num = k
+            break
 
-    champ = match_data['info']['participants'][p_num]['championName']
-    dmg = match_data['info']['participants'][p_num]['totalDamageDealtToChampions']
-    taken = match_data['info']['participants'][p_num]['totalDamageTaken']
-    gold = match_data['info']['participants'][p_num]['goldEarned']
-    match_time = match_data['info']['gameDuration']/60
-    mion = match_data['info']['participants'][p_num]['totalMinionsKilled']
-    winner = match_data['info']['participants'][p_num]['win']
-    death = match_data['info']['participants'][p_num]['deaths']
-    monsters = (match_data['info']['participants'][p_num]['neutralMinionsKilled'])
-    pos = (match_data['info']['participants'][p_num]['teamPosition'])
-    opp_champ = match_data['info']['participants'][opp_p_num]['championName']
+    if opp_p_num is None:
+        continue  # skip this match if no opponent found
 
+    # Total team damage
+    dmg_tot = sum(p['totalDamageDealtToChampions'] for p in info_participants if p['teamId'] == my_team_id)
 
+    champ = my_info['championName']
+    dmg = my_info['totalDamageDealtToChampions']
+    dmg_share = dmg / dmg_tot if dmg_tot > 0 else 0
+    taken = my_info['totalDamageTaken']
+    gold = my_info['goldEarned']
+    match_time = match_data['info']['gameDuration'] / 60
+    mion = my_info['totalMinionsKilled']
+    winner = my_info['win']
+    death = my_info['deaths']
+    monsters = my_info['neutralMinionsKilled']
+    pos = my_info['teamPosition']
+    opp_champ = info_participants[opp_p_num]['championName']
 
-    match_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/{match_ids[i]}/timeline'
-    response = requests.get(match_url, headers={"X-Riot-Token": API_KEY})
-    match_data = response.json()
+    # GET TIMELINE INFO
+    timeline_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/{match_ids[idx]}/timeline'
+    response = requests.get(timeline_url, headers={"X-Riot-Token": API_KEY})
+    timeline_data = response.json()
 
-    if opp_p_num == 0:    
-        gold7me = match_data['info']["frames"][7]["participantFrames"][str(p_num)]["totalGold"] 
-        gold7opp = '-'
-        gold15me = match_data['info']["frames"][15]["participantFrames"][str(p_num)]["totalGold"] 
-        gold15opp = '-'
+    # Get participant ID from index (1-based)
+    my_pid = info_participants[p_num]['participantId']
+    opp_pid = info_participants[opp_p_num]['participantId']
 
-        xp7me = match_data['info']["frames"][7]["participantFrames"][str(p_num)]["xp"] 
-        xp7opp = '-'
-        xp15me = match_data['info']["frames"][15]["participantFrames"][str(p_num)]["xp"]
-        xp15opp = '-'
+    try:
+        gold7me = timeline_data['info']['frames'][7]['participantFrames'][str(my_pid)]['totalGold']
+        gold7opp = timeline_data['info']['frames'][7]['participantFrames'][str(opp_pid)]['totalGold']
+        gold15me = timeline_data['info']['frames'][15]['participantFrames'][str(my_pid)]['totalGold']
+        gold15opp = timeline_data['info']['frames'][15]['participantFrames'][str(opp_pid)]['totalGold']
+        xp7me = timeline_data['info']['frames'][7]['participantFrames'][str(my_pid)]['xp']
+        xp7opp = timeline_data['info']['frames'][7]['participantFrames'][str(opp_pid)]['xp']
+        xp15me = timeline_data['info']['frames'][15]['participantFrames'][str(my_pid)]['xp']
+        xp15opp = timeline_data['info']['frames'][15]['participantFrames'][str(opp_pid)]['xp']
+    except KeyError:
+        continue  # skip match if frame 7 or 15 doesn't exist
 
-    else:
-        gold7me = match_data['info']["frames"][7]["participantFrames"][str(p_num)]["totalGold"] 
-        gold7opp = match_data['info']["frames"][7]["participantFrames"][str(opp_p_num)]["totalGold"]
-        gold15me = match_data['info']["frames"][15]["participantFrames"][str(p_num)]["totalGold"] 
-        gold15opp = match_data['info']["frames"][15]["participantFrames"][str(opp_p_num)]["totalGold"]
-
-        xp7me = match_data['info']["frames"][7]["participantFrames"][str(p_num)]["xp"] 
-        xp7opp = match_data['info']["frames"][7]["participantFrames"][str(opp_p_num)]["xp"] 
-        xp15me = match_data['info']["frames"][15]["participantFrames"][str(p_num)]["xp"]
-        xp15opp = match_data['info']["frames"][15]["participantFrames"][str(opp_p_num)]["xp"]
-    
     row = {
         'Champ': [champ],
         'Opp_champ': [opp_champ],
         'Damage_done': [dmg],
+        'Damage share': [dmg_share],
         'Damage_taken': [taken],
         'Gold_earned': [gold],
         'Match_length': [match_time],
@@ -125,12 +127,10 @@ for i in tqdm(range(len(match_ids))):
         'gold15opp': [gold15opp],
         'xp7opp': [xp7opp],
         'xp15opp': [xp15opp]
-
     }
-    new_row_df = pd.DataFrame(row)
 
-    # Append the new row to the existing DataFrame
-    df = pd.concat([df, new_row_df], ignore_index=True)
+    df = pd.concat([df, pd.DataFrame(row)], ignore_index=True)
+
 
 
 
