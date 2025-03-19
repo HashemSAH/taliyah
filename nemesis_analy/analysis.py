@@ -4,7 +4,7 @@ import seaborn as sns
 import statsmodels.api as sm
 from scipy.stats import ttest_ind
 from scipy.stats import f_oneway
-
+from scipy.stats import pearsonr
 
 
 df = pd.read_csv('neme_data.csv')
@@ -19,6 +19,7 @@ df['dmg/taken'] = df['Damage_done']/df['Damage_taken']
 df['dmg/min']= df['Damage_done']/df['Match_length']
 df['dmg/gold_min'] = df['Damage_done']/(df['Gold_earned']/df['Match_length'])
 df['cs/min'] =  (df['Minions_slain'] + df['Monsters_killed'])/df['Match_length']
+df['gold/min'] = df['Gold_earned']/df['Match_length']
 
 df['gold_diff7'] = df['gold7me'] - df['gold7opp']
 df['gold_diff15'] = df['gold15me'] - df['gold15opp']
@@ -27,6 +28,24 @@ df['xp_diff15'] = df['xp15me'] - df['xp15opp']
 
 df['lead7'] = df['gold_diff7'] > 0 
 df['lead15'] = df['gold_diff15'] > 0 
+
+df['lead_add'] = df['gold_diff15'] - df['gold_diff7']
+
+
+#damage share distribution 
+
+
+print(df['lead_add'].mean())
+print(df['gold_diff15'].mean())
+print(df['gold_diff7'].mean())
+
+sns.boxplot(x='Win', y='lead_add', data=df)
+plt.title("Damage share by win")
+plt.show()
+
+
+
+
 
 #Test of two means seperated by a categorical variable
 def t_test_func(col):
@@ -38,6 +57,24 @@ def t_test_func(col):
     t_stat, p_val = ttest_ind(group_1, group_2, equal_var=False)
     print(f"T-statistic: {t_stat:.4f}, p-value: {p_val:.4f}")
 
+
+# print(pearsonr(df['dmg/min'], df['gold/min']))
+# plt.scatter(df['gold/min'], df['dmg/min'])
+# plt.show()
+
+# group1 = df[df['Win'] == True]['gold_diff7']
+# group2 = df[df['Win'] == False]['gold_diff7']
+
+# t_stat, p_val = ttest_ind(group1, group2, equal_var=False)
+# print(group1.mean(), group2.mean())
+# print(f"T-statistic: {t_stat:.4f}, p-value: {p_val:.4f}")
+
+
+# sns.kdeplot(group1, label='Win', fill=True, bw_adjust=0.2)
+# sns.kdeplot(group2, label='Loss', fill=True, bw_adjust=0.2)
+
+# plt.legend()
+# plt.show()
 
 
 # y = df['Win']  
@@ -72,12 +109,15 @@ def t_test_func(col):
 # # Show the plots
 # plt.show()
 
-X = df['Deaths'] 
-X = sm.add_constant(X)              
-y = df['Win']                         
+# X = df[['gold_diff15','gold_diff7']] 
+# X = sm.add_constant(X)              
+# y = df['Win']                         
 
-model = sm.Logit(y, X).fit()
-print(model.summary())
+# model = sm.Logit(y, X).fit()
+# print(model.summary())
+
+# print(pearsonr(df['gold_diff15'],df['gold_diff7']))
+
 
 
 # group1 = df[df['Win'] == True]['gold_diff7']
