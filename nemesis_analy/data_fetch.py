@@ -1,9 +1,9 @@
 import requests
 import pandas as pd
 from tqdm import tqdm
-import time
+from collections import defaultdict
 
-API_KEY = 'RGAPI-1fe2e5fe-e520-40f2-b323-b22e01c7a0f2'
+API_KEY = 'RGAPI-bb3f400a-1d2b-402d-a892-00382a74bf3b'
 REGION = 'europe'
 
 # Step 1: Get the Summoner's PUUID
@@ -23,8 +23,8 @@ matches_url = f'https://{region2}.api.riotgames.com/lol/match/v5/matches/by-puui
 
 params = {
     'queue': 420,
-    'start': 0, 
-    'count': 50,  # Fetch the last x matches 
+    'start': 45, 
+    'count': 45,  # Fetch the last x matches 
     'api_key': API_KEY
 }
 
@@ -65,6 +65,8 @@ for idx in tqdm(range(len(match_ids))):
         if p['teamPosition'] == my_lane and p['teamId'] != my_team_id:
             opp_p_num = k
             break
+    
+    opp_team_id = info_participants[opp_p_num]['teamId']
 
     # Total team damage
     dmg_tot = sum(p['totalDamageDealtToChampions'] for p in info_participants if p['teamId'] == my_team_id)
@@ -81,9 +83,6 @@ for idx in tqdm(range(len(match_ids))):
     monsters = my_info['neutralMinionsKilled']
     pos = my_info['teamPosition']
     opp_champ = info_participants[opp_p_num]['championName']
-    # first_drag = 
-    # Num_drags = 
-    # void = 
 
 
     # GET TIMELINE INFO
@@ -95,17 +94,48 @@ for idx in tqdm(range(len(match_ids))):
     my_pid = info_participants[p_num]['participantId']
     opp_pid = info_participants[opp_p_num]['participantId']
 
-    try:
-        gold7me = timeline_data['info']['frames'][7]['participantFrames'][str(my_pid)]['totalGold']
-        gold7opp = timeline_data['info']['frames'][7]['participantFrames'][str(opp_pid)]['totalGold']
-        gold15me = timeline_data['info']['frames'][15]['participantFrames'][str(my_pid)]['totalGold']
-        gold15opp = timeline_data['info']['frames'][15]['participantFrames'][str(opp_pid)]['totalGold']
-        xp7me = timeline_data['info']['frames'][7]['participantFrames'][str(my_pid)]['xp']
-        xp7opp = timeline_data['info']['frames'][7]['participantFrames'][str(opp_pid)]['xp']
-        xp15me = timeline_data['info']['frames'][15]['participantFrames'][str(my_pid)]['xp']
-        xp15opp = timeline_data['info']['frames'][15]['participantFrames'][str(opp_pid)]['xp']
-    except KeyError:
-        continue  # skip match if frame 7 or 15 doesn't exist
+    me_gold_over_time = [frame['participantFrames'][str(my_pid)]['totalGold']
+    for frame in timeline_data['info']['frames']]
+    opp_gold_over_time = [frame['participantFrames'][str(opp_pid)]['totalGold']
+    for frame in timeline_data['info']['frames']]
+    
+    me_xp_over_time = [frame['participantFrames'][str(my_pid)]['xp']
+    for frame in timeline_data['info']['frames']]
+    opp_xp_over_time = [frame['participantFrames'][str(opp_pid)]['xp']
+    for frame in timeline_data['info']['frames']]
+
+    events = []
+    for frame in timeline_data['info']['frames']:
+        events.extend(frame['events'])
+    elite_kills = [e for e in events if e['type'] == 'ELITE_MONSTER_KILL']
+
+
+    objectives_by_team = defaultdict(list)
+    objectives_count_by_team = defaultdict(lambda: defaultdict(int))
+    first_grub_team = None
+    first_dragon_team = None
+
+    for event in elite_kills:
+        monster = event['monsterType']
+        team_id = event['killerTeamId']
+        time = round(event['timestamp'] / 60000, 2)
+        sub_type = event.get('monsterSubType', '')
+
+        # Log kill
+        objectives_by_team[team_id].append({
+            'type': monster,
+            'sub_type': sub_type,
+            'time': time
+        })
+
+        # Count objectives
+        objectives_count_by_team[team_id][monster] += 1
+
+    def to_dict(obj):
+        if isinstance(obj, defaultdict):
+            return {k: to_dict(v) for k, v in obj.items()}
+        return obj
+
 
     row = {
         'Champ': [champ],
@@ -120,14 +150,14 @@ for idx in tqdm(range(len(match_ids))):
         'Deaths': [death],
         'Win': [winner],
         'Lane': [pos],
-        'gold7me': [gold7me],
-        'gold15me': [gold15me],
-        'xp7me': [xp7me],
-        'xp15me': [xp15me],
-        'gold7opp': [gold7opp],
-        'gold15opp': [gold15opp],
-        'xp7opp': [xp7opp],
-        'xp15opp': [xp15opp]
+        'gold_me': [me_gold_over_time],
+        'xp_me': [me_xp_over_time],
+        'gold_opp': [opp_gold_over_time],
+        'xp_opp': [opp_xp_over_time],
+        'objs_me': [to_dict(objectives_count_by_team[my_team_id])],
+        'objs_opp': [to_dict(objectives_count_by_team[opp_team_id])],
+        'my_team_id': [my_team_id],
+        'obj_timeline': [to_dict(objectives_by_team)]
     }
 
     df = pd.concat([df, pd.DataFrame(row)], ignore_index=True)
@@ -135,6 +165,6 @@ for idx in tqdm(range(len(match_ids))):
 
 
 
-df.to_csv('neme_data.csv', index=False)  # Set index=False to avoid writing row indices
+df.to_csv('neme_data2_1.csv', index=False)  # Set index=False to avoid writing row indices
 
 
