@@ -1,7 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
-
+import matplotlib.ticker as mticker
+import seaborn as sns
 
 df = pd.read_csv("picks_and_bans_LCP.csv")
 
@@ -113,33 +114,38 @@ winrate_df = pd.DataFrame([
 winrate_df = winrate_df.sort_values(by='games', ascending=False).reset_index(drop=True)
 
 # Save to CSV
-winrate_df.to_csv('winrate.csv', index=False)
+winrate_df.to_csv('winrates_adj_lcp.csv', index=False)
 
 
 
 
 
+custom_colors = sns.color_palette("tab10", 2)  # 2 teams
 
-# col = df['BP1']
-# teams = df['Blue']  # This is the column with team names
+filtered_bp1 = df[df['Blue'].isin(['DetonatioN FocusMe', 'Chiefs Esports Club'])]
+pick_counts_bp1 = pd.crosstab(filtered_bp1['BP1'], filtered_bp1['Blue'])
 
+df_melted = df.melt(id_vars=['Red'], value_vars=['RP1', 'RP2'], var_name="Pick Position", value_name="Champion")
+df_target_team = df_melted[df_melted['Red'].isin(['DetonatioN FocusMe', 'Chiefs Esports Club'])]
+pick_counts_rp = pd.crosstab(df_target_team['Champion'], df_target_team['Red'])
 
-# pick_counts = pd.crosstab(col, teams)
+fig, axes = plt.subplots(2, 1, figsize=(12, 12), sharex=False)
 
-# # Plot stacked bar chart
-# pick_counts.plot(kind='bar', stacked=True, figsize=(12, 6), colormap='tab10')
+pick_counts_bp1.plot(kind='bar', stacked=True, ax=axes[0], color=custom_colors)
+axes[0].set_ylabel("Frequency")
+axes[0].set_xlabel("Champion")
+axes[0].set_title("BP1 Picks Frequency by Team")
+axes[0].legend(title="Teams", bbox_to_anchor=(1.05, 1), loc='upper left')
+axes[0].yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
-# # Set plot labels and title
-# plt.xlabel("Champion Picks")
-# plt.ylabel("Frequency")
-# plt.title("Champion Picks Frequency by Team")
-# plt.xticks(rotation=45)
+pick_counts_rp.plot(kind='bar', stacked=True, ax=axes[1], color=custom_colors)
+axes[1].set_xlabel("Champion")
+axes[1].set_ylabel("Frequency")
+axes[1].set_title("RP1-2 Picks Frequency by Team")
+axes[1].legend(title="Teams", bbox_to_anchor=(1.05, 1), loc='upper left')
+axes[1].yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
-# # Optional: Add a legend to indicate teams
-# plt.legend(title="Teams", bbox_to_anchor=(1.05, 1), loc='upper left')
-
-# plt.tight_layout()
-# plt.savefig("champ_by_team")
-# plt.show()
-
-
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig("champ_picks_stacked.png")
+plt.show()

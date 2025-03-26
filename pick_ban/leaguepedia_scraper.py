@@ -5,8 +5,13 @@ import pandas as pd
 
 # comp = "LCP 2025 Season Kickoff"
 # url = "https://lol.fandom.com/wiki/Special:RunQuery/PickBanHistory?PBH%5Bpage%5D=LCP+2025+Season+Kickoff&PBH%5Bteam%5D=&PBH%5Btextonly%5D%5Bis_checkbox%5D=true&PBH%5Btextonly%5D%5Bvalue%5D=&_run=&pfRunQueryFormName=PickBanHistory&wpRunQuery=&pf_free_text="
-comp = "First_Stand_2025"
-url = "https://lol.fandom.com/wiki/Special:RunQuery/PickBanHistory?PBH%5Bpage%5D=First+Stand+2025&PBH%5Bteam%5D=&PBH%5Btextonly%5D%5Bis_checkbox%5D=true&PBH%5Btextonly%5D%5Bvalue%5D=&_run=&pfRunQueryFormName=PickBanHistory&wpRunQuery=&pf_free_text="
+# comp = "First_Stand_2025"
+# url = "https://lol.fandom.com/wiki/Special:RunQuery/PickBanHistory?PBH%5Bpage%5D=First+Stand+2025&PBH%5Bteam%5D=&PBH%5Btextonly%5D%5Bis_checkbox%5D=true&PBH%5Btextonly%5D%5Bvalue%5D=&_run=&pfRunQueryFormName=PickBanHistory&wpRunQuery=&pf_free_text="
+
+
+comp = "ICJ"
+url = "https://lol.fandom.com/wiki/Special:RunQuery/PickBanHistoryTeam?PBHT%5Bpage%5D=Ici+Japon+Corp.+Esport&PBHT%5Btextonly%5D=Yes&_run="
+
 
 headers = {
     "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"
